@@ -1,7 +1,89 @@
-def Tensorbrot():
-    print("Hello TensorBrot")
-    # generate dataset
+#%%
+
+import tensorflow as tf
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import datetime
+
+print(tf.__version__)
+
+#%%
+
+class MandelbrotDataSet:
+    def __init__(self, size=1000, max_depth=100, xmin=-2.0, xmax=0.7, ymin=-1.3, ymax=1.3):
+        self.x = tf.random.uniform((size,),xmin,xmax,tf.float32)
+        self.y = tf.random.uniform((size,),ymin,ymax,tf.float32)
+        self.outputs = self.mandel(x=self.x, y=self.y,max_depth=max_depth)
+        self.data = tf.stack([self.x, self.y], axis=1)
+
+    @staticmethod
+    def mandel(x, y, max_depth):
+        zx, zy = x,y
+        for n in range(1, max_depth):
+            zx, zy = zx*zx - zy*zy + x, 2*zx*zy + y
+        return tf.cast(tf.less(zx*zx+zy*zy, 4.0),tf.float32)
+
+#%%
+
+trainingData = MandelbrotDataSet(1_000_000)
+
+#%%
+
+#plt.scatter(trainingData.x, trainingData.y, s=1, c=trainingData.outputs)
+
+#%%
+
+model = tf.keras.Sequential([
+    tf.keras.Input(shape=(2,)),
+    tf.keras.layers.Dense(100,activation="relu"),
+    tf.keras.layers.Dense(100,activation="relu"),
+    tf.keras.layers.Dense(100,activation="relu"),
+    tf.keras.layers.Dense(100,activation="relu"),
+    tf.keras.layers.Dense(100,activation="relu"),
+    tf.keras.layers.Dense(100,activation="relu"),
+    tf.keras.layers.Dense(100,activation="relu"),
+    tf.keras.layers.Dense(100,activation="relu"),
+    tf.keras.layers.Dense(100,activation="relu"),
+    tf.keras.layers.Dense(100,activation="relu"),
+    tf.keras.layers.Dense(1,activation=None)
+])
+model.compile(loss=tf.keras.losses.MeanSquaredError(), optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),metrics=["mae"])
+#log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+#tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
+#history = model.fit(trainingData.data, trainingData.outputs,epochs=50,batch_size=100,callbacks=[tensorboard_callback])
+history = model.fit(trainingData.data, trainingData.outputs,epochs=50,batch_size=10000)
+
+#%%
+
+np.set_printoptions(precision=3, suppress=True)
+
+hist = pd.DataFrame(history.history)
+hist['epoch'] = history.epoch
+hist.tail()
+plt.figure(1)
+def plot_loss(history):
+  plt.plot(history.history['loss'], label='loss')
+#  plt.ylim([0, 10])
+  plt.xlabel('Epoch')
+  plt.ylabel('Error [mae]')
+  plt.legend()
+  plt.grid(True)
+
+plot_loss(history)
+
+#%%
+x = tf.random.uniform((100_000,), -2.0, 0.7, tf.float32)
+y = tf.random.uniform((100_000,), -1.3, 1.3, tf.float32)
+data = tf.stack([x, y], axis=1)
+
+predictions = model.predict(data)
+
+#%%
+plt.figure(2)
+plot = plt.scatter(x, y, s=1, c=predictions)
+plt.show()
+#%%
 
 
-if __name__ == '__main__':
-    Tensorbrot()
