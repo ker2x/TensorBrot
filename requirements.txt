@@ -1,0 +1,7 @@
+tensorflow-deps
+tensorflow-macos
+tensorflow-metal
+numpy
+pandas
+matplotlib
+jupyter

@@ -22,7 +22,7 @@ class MandelbrotDataSet:
         zx, zy = x,y
         for n in range(1, max_depth):
             zx, zy = zx*zx - zy*zy + x, 2*zx*zy + y
-        return tf.cast(tf.less(zx*zx+zy*zy, 4.0),tf.float32)
+        return tf.cast(tf.less(zx*zx+zy*zy, 4.0),tf.float16) #* 2.0 - 1.0
 
 #%%
 
@@ -34,26 +34,20 @@ trainingData = MandelbrotDataSet(1_000_000)
 
 #%%
 
-model = tf.keras.Sequential([
-    tf.keras.Input(shape=(2,)),
-    tf.keras.layers.Dense(100,activation="relu"),
-    tf.keras.layers.Dense(100,activation="relu"),
-    tf.keras.layers.Dense(100,activation="relu"),
-    tf.keras.layers.Dense(100,activation="relu"),
-    tf.keras.layers.Dense(100,activation="relu"),
-    tf.keras.layers.Dense(100,activation="relu"),
-    tf.keras.layers.Dense(100,activation="relu"),
-    tf.keras.layers.Dense(100,activation="relu"),
-    tf.keras.layers.Dense(100,activation="relu"),
-    tf.keras.layers.Dense(100,activation="relu"),
-    tf.keras.layers.Dense(1,activation=None)
-])
-model.compile(loss=tf.keras.losses.MeanSquaredError(), optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),metrics=["mae"])
-#log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-#tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+model = tf.keras.Sequential()
+tf.keras.Input(shape=(2,)),
+for _ in range(20):
+    model.add(tf.keras.layers.Dense(200,activation="relu"))
+    #model.add(tf.keras.layers.ELU(100))
+model.add(tf.keras.layers.Dense(1,activation=None))
 
-#history = model.fit(trainingData.data, trainingData.outputs,epochs=50,batch_size=100,callbacks=[tensorboard_callback])
-history = model.fit(trainingData.data, trainingData.outputs,epochs=50,batch_size=10000)
+model.compile(loss=tf.keras.losses.SquaredHinge(),
+              optimizer=tf.keras.optimizers.Adadelta(learning_rate=1.0),
+              metrics=["accuracy"])
+
+#%%
+
+history = model.fit(trainingData.data, trainingData.outputs,epochs=30,batch_size=10000)
 
 #%%
 
@@ -65,7 +59,6 @@ hist.tail()
 plt.figure(1)
 def plot_loss(history):
   plt.plot(history.history['loss'], label='loss')
-#  plt.ylim([0, 10])
   plt.xlabel('Epoch')
   plt.ylabel('Error [mae]')
   plt.legend()
@@ -74,16 +67,16 @@ def plot_loss(history):
 plot_loss(history)
 
 #%%
-x = tf.random.uniform((100_000,), -2.0, 0.7, tf.float32)
-y = tf.random.uniform((100_000,), -1.3, 1.3, tf.float32)
+x = tf.random.uniform((200_000,), -2.0, 0.7, tf.float32)
+y = tf.random.uniform((200_000,), -1.3, 1.3, tf.float32)
 data = tf.stack([x, y], axis=1)
-
 predictions = model.predict(data)
 
 #%%
 plt.figure(2)
 plot = plt.scatter(x, y, s=1, c=predictions)
 plt.show()
+
 #%%
 
 
