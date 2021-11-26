@@ -26,7 +26,7 @@ class MandelbrotDataSet:
 
 #%%
 
-trainingData = MandelbrotDataSet(1_000_000)
+trainingData = MandelbrotDataSet(100_000)
 
 #%%
 
@@ -36,18 +36,18 @@ trainingData = MandelbrotDataSet(1_000_000)
 
 model = tf.keras.Sequential()
 tf.keras.Input(shape=(2,)),
-for _ in range(20):
-    model.add(tf.keras.layers.Dense(200,activation="relu"))
-    #model.add(tf.keras.layers.ELU(100))
+for _ in range(10):
+    model.add(tf.keras.layers.Dense(20,activation="relu"))
 model.add(tf.keras.layers.Dense(1,activation=None))
 
-model.compile(loss=tf.keras.losses.SquaredHinge(),
-              optimizer=tf.keras.optimizers.Adadelta(learning_rate=1.0),
-              metrics=["accuracy"])
+model.compile(loss=tf.keras.losses.MeanSquaredError(),
+              optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+#              optimizer=tf.keras.optimizers.Adadelta(learning_rate=1.0),
+              metrics=["accuracy", "mae", "mse"])
 
 #%%
 
-history = model.fit(trainingData.data, trainingData.outputs,epochs=30,batch_size=10000)
+history = model.fit(trainingData.data, trainingData.outputs,epochs=1000,batch_size=1000)
 
 #%%
 
@@ -60,7 +60,7 @@ plt.figure(1)
 def plot_loss(history):
   plt.plot(history.history['loss'], label='loss')
   plt.xlabel('Epoch')
-  plt.ylabel('Error [mae]')
+  plt.ylabel('Error')
   plt.legend()
   plt.grid(True)
 
