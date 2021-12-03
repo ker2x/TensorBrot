@@ -47,7 +47,7 @@ model.compile(loss=tf.keras.losses.MeanSquaredError(),
 
 #%%
 
-history = model.fit(trainingData.data, trainingData.outputs,epochs=1000,batch_size=1000)
+history = model.fit(trainingData.data, trainingData.outputs,epochs=10,batch_size=1000)
 
 #%%
 
