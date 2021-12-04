@@ -11,7 +11,7 @@ print(tf.__version__)
 #%%
 
 class MandelbrotDataSet:
-    def __init__(self, size=1000, max_depth=100, xmin=-2.0, xmax=0.7, ymin=-1.3, ymax=1.3):
+    def __init__(self, size=1000, max_depth=50, xmin=-2.0, xmax=0.7, ymin=-1.3, ymax=1.3):
         self.x = tf.random.uniform((size,),xmin,xmax,tf.float16)
         self.y = tf.random.uniform((size,),ymin,ymax,tf.float16)
         self.outputs = self.mandel(x=self.x, y=self.y,max_depth=max_depth)
@@ -29,26 +29,27 @@ class MandelbrotDataSet:
 trainingData = MandelbrotDataSet(1_000_000)
 
 #%%
-
+#plt.figure(3)
 #plt.scatter(trainingData.x, trainingData.y, s=1, c=trainingData.outputs)
-
+#plt.show()
 #%%
 
 model = tf.keras.Sequential()
 tf.keras.Input(shape=(2,)),
-for _ in range(20):
+for _ in range(10):
     model.add(tf.keras.layers.Dense(20,activation="relu"))
 model.add(tf.keras.layers.Dense(2, activation="softmax"))
 model.add(tf.keras.layers.Dense(1,activation=None))
 
 model.compile(loss=tf.keras.losses.MeanSquaredError(),
-              optimizer=tf.keras.optimizers.Adam(learning_rate=0.0002),
+              optimizer=tf.keras.optimizers.Adam(learning_rate=0.002),
 #              optimizer=tf.keras.optimizers.Adadelta(learning_rate=1.0),
               metrics=["accuracy", "mae", "mse"])
 
 #%%
 
-history = model.fit(trainingData.data, trainingData.outputs,epochs=100,batch_size=10000)
+history = model.fit(trainingData.data, trainingData.outputs,epochs=1000,batch_size=10_000,
+                    shuffle=True)
 
 #%%
 
