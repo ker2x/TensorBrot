@@ -1,4 +1,5 @@
 #%%
+import time
 
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -48,7 +49,7 @@ model.compile(loss=tf.keras.losses.MeanSquaredError(),
 
 #%%
 
-history = model.fit(trainingData.data, trainingData.outputs,epochs=1000,batch_size=10_000,
+history = model.fit(trainingData.data, trainingData.outputs,epochs=100,batch_size=1_000,
                     shuffle=True)
 
 #%%
@@ -82,4 +83,7 @@ plt.show()
 
 #%%
 
-
+#save model
+ts = int(time.time())
+file_path = f"models/mandelbrain-{ts}/"
+model.save(filepath=file_path, save_format='tf')
