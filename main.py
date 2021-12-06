@@ -8,11 +8,13 @@ import pandas as pd
 import datetime
 
 print(tf.__version__)
+physical_devices = tf.config.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(physical_devices[0],True)
 
 #%%
 
 class MandelbrotDataSet:
-    def __init__(self, size=1000, max_depth=100, xmin=-2.0, xmax=2.0, ymin=-2.0, ymax=2.0):
+    def __init__(self, size=1000, max_depth=100, xmin=-2.0, xmax=0.7, ymin=-1.3, ymax=1.3):
         self.x = tf.random.uniform((size,),xmin,xmax,tf.float16)
         self.y = tf.random.uniform((size,),ymin,ymax,tf.float16)
         self.outputs = self.mandel(x=self.x, y=self.y,max_depth=max_depth)
@@ -23,7 +25,7 @@ class MandelbrotDataSet:
         zx, zy = x,y
         for n in range(1, max_depth):
             zx, zy = zx*zx - zy*zy + x, 2*zx*zy + y
-        return tf.cast(tf.less(zx*zx+zy*zy, 4.0),tf.float16) * 2.0 - 1.0
+        return tf.cast(tf.less(zx*zx+zy*zy, 4.0),tf.float16)# * 2.0 - 1.0
 
 #%%
 
@@ -46,10 +48,11 @@ tf.keras.Input(shape=(2,)),
 
 #model.add(tf.keras.layers.Dense(LAYERWIDTH, activation="gelu"))
 #model.add(tf.keras.layers.Dense(LAYERWIDTH, activation="gelu"))
-#model.add(tf.keras.layers.Dense(4, activation=None))
+#model.add(tf.keras.layers.Dense(4, activation="gelu"))
 
 for _ in range(HIDDENLAYERS):
     model.add(tf.keras.layers.Dense(LAYERWIDTH, activation="gelu"))
+
 model.add(tf.keras.layers.Dense(2, activation="gelu"))
 model.add(tf.keras.layers.Dense(1,activation=None))
 
