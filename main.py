@@ -27,7 +27,7 @@ class MandelbrotDataSet:
 
 #%%
 
-trainingData = MandelbrotDataSet(10_000_000)
+trainingData = MandelbrotDataSet(1_000_000)
 
 #%%
 #plt.figure(3)
@@ -38,8 +38,8 @@ trainingData = MandelbrotDataSet(10_000_000)
 HIDDENLAYERS = 10
 LAYERWIDTH = 20
 LR = 0.0008
-EPOCHS = 10
-BATCH_SIZE = 10000
+EPOCHS = 100
+BATCH_SIZE = 1000
 
 model = tf.keras.Sequential()
 tf.keras.Input(shape=(2,)),
