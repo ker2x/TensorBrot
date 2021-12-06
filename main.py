@@ -29,22 +29,22 @@ class MandelbrotDataSet:
 
 #%%
 
-trainingData = MandelbrotDataSet(1_000_000)
+trainingData = MandelbrotDataSet(100_000)
 
 #%%
-#plt.figure(3)
-#plt.scatter(trainingData.x, trainingData.y, s=1, c=trainingData.outputs)
-#plt.show()
+plt.figure(3)
+plt.scatter(trainingData.x, trainingData.y, s=1, c=trainingData.outputs)
+plt.show()
 #%%
 
 HIDDENLAYERS = 10
 LAYERWIDTH = 20
-LR = 0.0008
-EPOCHS = 100
-BATCH_SIZE = 1000
+LR = 0.0012
+EPOCHS = 500
+BATCH_SIZE = 500
 
 model = tf.keras.Sequential()
-tf.keras.Input(shape=(2,)),
+tf.keras.Input(shape=(2,))
 
 #model.add(tf.keras.layers.Dense(LAYERWIDTH, activation="gelu"))
 #model.add(tf.keras.layers.Dense(LAYERWIDTH, activation="gelu"))
