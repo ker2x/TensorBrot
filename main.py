@@ -25,23 +25,23 @@ class MandelbrotDataSet:
         zx, zy = x,y
         for n in range(1, max_depth):
             zx, zy = zx*zx - zy*zy + x, 2*zx*zy + y
-        return tf.cast(tf.less(zx*zx+zy*zy, 4.0),tf.float16)# * 2.0 - 1.0
+        return tf.cast(tf.less(zx*zx+zy*zy, 4.0),tf.float16) #* 2.0 - 1.0
 
 #%%
 
-trainingData = MandelbrotDataSet(100_000)
+trainingData = MandelbrotDataSet(200_000)
 
 #%%
-plt.figure(3)
-plt.scatter(trainingData.x, trainingData.y, s=1, c=trainingData.outputs)
-plt.show()
+#plt.figure(3)
+#plt.scatter(trainingData.x, trainingData.y, s=1, c=trainingData.outputs)
+#plt.show()
 #%%
 
 HIDDENLAYERS = 10
-LAYERWIDTH = 40
+LAYERWIDTH = 60
 LR = 0.0012
-EPOCHS = 500
-BATCH_SIZE = 500
+EPOCHS = 200
+BATCH_SIZE = 2000
 
 model = tf.keras.Sequential()
 tf.keras.Input(shape=(2,))
@@ -54,7 +54,7 @@ for _ in range(HIDDENLAYERS):
     model.add(tf.keras.layers.Dense(LAYERWIDTH, activation="gelu"))
 
 model.add(tf.keras.layers.Dense(2, activation="gelu"))
-model.add(tf.keras.layers.Dense(1,activation=None))
+model.add(tf.keras.layers.Dense(1,activation="sigmoid"))
 
 model.compile(loss=tf.keras.losses.MeanSquaredError(),
               optimizer=tf.keras.optimizers.Adam(learning_rate=LR),
