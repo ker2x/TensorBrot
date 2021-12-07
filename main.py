@@ -29,18 +29,24 @@ class MandelbrotDataSet:
 
 #%%
 
-trainingData = MandelbrotDataSet(200_000)
+#trainingData = MandelbrotDataSet(200_000)
 
-#%%
-#plt.figure(3)
-#plt.scatter(trainingData.x, trainingData.y, s=1, c=trainingData.outputs)
-#plt.show()
-#%%
+class MandelSequence(tf.keras.utils.Sequence):
+    def __init__(self, batch_size, batch_per_seq):
+        self.batch_size = batch_size
+        self.batch_per_seq = batch_per_seq
+    def __len__(self):
+        return self.batch_per_seq
+    def __getitem__(self, item):
+        batch = MandelbrotDataSet(self.batch_size)
+        return batch.data, batch.outputs
 
+
+BATCH_PER_SEQ = 100
 HIDDENLAYERS = 10
 LAYERWIDTH = 60
 LR = 0.0012
-EPOCHS = 20
+EPOCHS = 50
 BATCH_SIZE = 1000
 
 model = tf.keras.Sequential()
@@ -49,7 +55,6 @@ tf.keras.Input(shape=(2,))
 for _ in range(HIDDENLAYERS):
     model.add(tf.keras.layers.Dense(LAYERWIDTH, activation="gelu"))
 
-model.add(tf.keras.layers.Dense(2, activation="gelu"))
 model.add(tf.keras.layers.Dense(1,activation="sigmoid"))
 
 model.compile(loss=tf.keras.losses.MeanSquaredError(),
@@ -59,8 +64,8 @@ model.compile(loss=tf.keras.losses.MeanSquaredError(),
 
 #%%
 
-history = model.fit(trainingData.data, trainingData.outputs,epochs=EPOCHS,batch_size=BATCH_SIZE,
-                    shuffle=True)
+sequence = MandelSequence(BATCH_SIZE, BATCH_PER_SEQ)
+history = model.fit(sequence,epochs=EPOCHS)
 
 #%%
 
@@ -71,10 +76,11 @@ hist['epoch'] = history.epoch
 hist.tail()
 plt.figure(1)
 def plot_loss(history):
-  plt.plot(history.history['loss'], label='loss')
+  plt.plot(history.history['loss'], label='training loss')
+#  plt.plot(history.history['val_loss'], label='validation loss')
   plt.xlabel('Epoch')
-  plt.ylabel('Error')
-  plt.ylim((0.0, 0.1))
+  plt.ylabel('Loss')
+  plt.ylim((0.0, 0.04))
   plt.legend()
   plt.grid(True)
 
