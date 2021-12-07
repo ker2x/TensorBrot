@@ -41,13 +41,15 @@ class MandelSequence(tf.keras.utils.Sequence):
         batch = MandelbrotDataSet(self.batch_size)
         return batch.data, batch.outputs
 
+#%%
 
-BATCH_PER_SEQ = 100
+BATCH_SIZE = 4096
+BATCH_PER_SEQ = 40
+EPOCHS = 200
+LR = 0.0012
+
 HIDDENLAYERS = 10
 LAYERWIDTH = 60
-LR = 0.0012
-EPOCHS = 50
-BATCH_SIZE = 1000
 
 model = tf.keras.Sequential()
 tf.keras.Input(shape=(2,))
@@ -83,8 +85,8 @@ hist['epoch'] = history.epoch
 hist.tail()
 plt.figure(1)
 def plot_loss(history):
-  plt.plot(history.history['loss'], label='training loss')
   plt.plot(history.history['val_loss'], label='validation loss')
+  plt.plot(history.history['loss'], label='training loss')
   plt.xlabel('Epoch')
   plt.ylabel('Loss')
   plt.ylim((0.0, 0.04))
@@ -100,7 +102,7 @@ data = tf.stack([x, y], axis=1)
 predictions = model.predict(data)
 
 #%%
-plt.figure(2)
+plt.figure(2, figsize=(2.7*3, 2.6*3), dpi=300)
 plot = plt.scatter(x, y, s=1, c=predictions)
 plt.show()
 
