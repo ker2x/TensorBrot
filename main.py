@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import datetime
+import imageio
 
 print(tf.__version__)
 physical_devices = tf.config.list_physical_devices('GPU')
@@ -28,8 +29,23 @@ class MandelbrotDataSet:
         return tf.cast(tf.less(zx*zx+zy*zy, 4.0),tf.float16) #* 2.0 - 1.0
 
 #%%
+# VIDEO
+writer = imageio.get_writer('./captures/autosave.mp4', fps=30)
+capture_rate=10
 
-#trainingData = MandelbrotDataSet(200_000)
+#%%
+class saveToVideo(tf.keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        plt.figure(4)
+        x = tf.random.uniform((2_000,), -2.0, 0.7, tf.float16)
+        y = tf.random.uniform((2_000,), -1.3, 1.3, tf.float16)
+        data = tf.stack([x, y], axis=1)
+        predictions = model.predict(data)
+        plot = plt.scatter(x, y, s=1, c=predictions)
+        plt.savefig("captures/autosave.png")
+        writer.append_data(imageio.imread("captures/autosave.png"))
+
+#%%
 
 class MandelSequence(tf.keras.utils.Sequence):
     def __init__(self, batch_size, batch_per_seq):
@@ -44,8 +60,8 @@ class MandelSequence(tf.keras.utils.Sequence):
 #%%
 
 BATCH_SIZE = 8192
-BATCH_PER_SEQ = 64
-EPOCHS = 40
+BATCH_PER_SEQ = 16
+EPOCHS = 200
 LR = 0.0012
 
 HIDDENLAYERS = 10
@@ -68,13 +84,14 @@ model.compile(loss=tf.keras.losses.MeanSquaredError(),
 
 sequence = MandelSequence(BATCH_SIZE, BATCH_PER_SEQ)
 val_sequence = batch = MandelbrotDataSet(BATCH_SIZE)
-history = model.fit(sequence,epochs=EPOCHS, validation_data=(val_sequence.data, val_sequence.outputs))
+history = model.fit(sequence,epochs=EPOCHS, validation_data=(val_sequence.data, val_sequence.outputs),
+                    callbacks=[saveToVideo()])
 
 #%%
-print("Evaluate on test data")
-eval_sequence = MandelSequence(BATCH_SIZE, 2)
-results = model.evaluate(eval_sequence)
-print("test loss, test acc:", results)
+#print("Evaluate on test data")
+#eval_sequence = MandelSequence(BATCH_SIZE, 2)
+#results = model.evaluate(eval_sequence)
+#print("test loss, test acc:", results)
 
 #%%
 
@@ -112,3 +129,5 @@ plt.show()
 ts = int(time.time())
 file_path = f"models/mandelbrain-{ts}/"
 model.save(filepath=file_path, save_format='tf')
+
+writer.close()
