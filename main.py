@@ -65,7 +65,14 @@ model.compile(loss=tf.keras.losses.MeanSquaredError(),
 #%%
 
 sequence = MandelSequence(BATCH_SIZE, BATCH_PER_SEQ)
-history = model.fit(sequence,epochs=EPOCHS)
+val_sequence = MandelSequence(BATCH_SIZE, 2)
+history = model.fit(sequence,epochs=EPOCHS, validation_data=val_sequence)
+
+#%%
+print("Evaluate on test data")
+eval_sequence = MandelSequence(BATCH_SIZE, 2)
+results = model.evaluate(eval_sequence)
+print("test loss, test acc:", results)
 
 #%%
 
@@ -77,7 +84,7 @@ hist.tail()
 plt.figure(1)
 def plot_loss(history):
   plt.plot(history.history['loss'], label='training loss')
-#  plt.plot(history.history['val_loss'], label='validation loss')
+  plt.plot(history.history['val_loss'], label='validation loss')
   plt.xlabel('Epoch')
   plt.ylabel('Loss')
   plt.ylim((0.0, 0.04))
