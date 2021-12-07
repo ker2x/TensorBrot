@@ -40,15 +40,11 @@ trainingData = MandelbrotDataSet(200_000)
 HIDDENLAYERS = 10
 LAYERWIDTH = 60
 LR = 0.0012
-EPOCHS = 200
-BATCH_SIZE = 2000
+EPOCHS = 20
+BATCH_SIZE = 1000
 
 model = tf.keras.Sequential()
 tf.keras.Input(shape=(2,))
-
-#model.add(tf.keras.layers.Dense(LAYERWIDTH, activation="gelu"))
-#model.add(tf.keras.layers.Dense(LAYERWIDTH, activation="gelu"))
-#model.add(tf.keras.layers.Dense(4, activation="gelu"))
 
 for _ in range(HIDDENLAYERS):
     model.add(tf.keras.layers.Dense(LAYERWIDTH, activation="gelu"))
