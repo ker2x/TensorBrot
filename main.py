@@ -43,9 +43,9 @@ class MandelSequence(tf.keras.utils.Sequence):
 
 #%%
 
-BATCH_SIZE = 4096
-BATCH_PER_SEQ = 40
-EPOCHS = 200
+BATCH_SIZE = 8192
+BATCH_PER_SEQ = 64
+EPOCHS = 40
 LR = 0.0012
 
 HIDDENLAYERS = 10
@@ -67,8 +67,8 @@ model.compile(loss=tf.keras.losses.MeanSquaredError(),
 #%%
 
 sequence = MandelSequence(BATCH_SIZE, BATCH_PER_SEQ)
-val_sequence = MandelSequence(BATCH_SIZE, 2)
-history = model.fit(sequence,epochs=EPOCHS, validation_data=val_sequence)
+val_sequence = batch = MandelbrotDataSet(BATCH_SIZE)
+history = model.fit(sequence,epochs=EPOCHS, validation_data=(val_sequence.data, val_sequence.outputs))
 
 #%%
 print("Evaluate on test data")
