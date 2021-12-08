@@ -20,8 +20,8 @@ print(tf.__version__)
 
 # Optionally Hide GPU from visible devices (run on cpu)
 # -----------------------------------------------------
-# tf.config.set_visible_devices([], 'GPU')
-# tf.debugging.set_log_device_placement(True)
+#tf.config.set_visible_devices([], 'GPU')
+#tf.debugging.set_log_device_placement(True)
 
 #%%
 
@@ -76,13 +76,13 @@ class MandelSequence(tf.keras.utils.Sequence):
 
 #%%
 
-BATCH_SIZE = 16384
-BATCH_PER_SEQ = 10
+BATCH_SIZE = 4096
+BATCH_PER_SEQ = 64
 EPOCHS = 1000
 LR = 0.0020
 
 HIDDENLAYERS = 10
-LAYERWIDTH = 256
+LAYERWIDTH = 126
 
 # CREATE MODEL
 # ------------
