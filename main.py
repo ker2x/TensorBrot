@@ -1,47 +1,50 @@
-#%%
 import time
-
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import datetime
 import imageio
 
 print(tf.__version__)
-physical_devices = tf.config.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(physical_devices[0],True)
-#from tensorflow.python.framework.ops import disable_eager_execution
-#disable_eager_execution()
-#print(tf.executing_eagerly())
 
-# Hide GPU from visible devices
-#tf.config.set_visible_devices([], 'GPU')
-#tf.debugging.set_log_device_placement(True)
+# Optionally set memory groth to True
+# -----------------------------------
+# physical_devices = tf.config.list_physical_devices('GPU')
+# tf.config.experimental.set_memory_growth(physical_devices[0],True)
+
+# Optionally disable eager execution (doesn't works with this code for now)
+# -------------------------------------------------------------------------
+# from tensorflow.python.framework.ops import disable_eager_execution
+# disable_eager_execution()
+# print(tf.executing_eagerly())
+
+# Optionally Hide GPU from visible devices (run on cpu)
+# -----------------------------------------------------
+# tf.config.set_visible_devices([], 'GPU')
+# tf.debugging.set_log_device_placement(True)
 
 #%%
 
-#class MandelbrotDataSet:
 @tf.function
 def MandelbrotDataSet(size=1000, max_depth=100, xmin=-2.0, xmax=0.7, ymin=-1.3, ymax=1.3):
     x = tf.random.uniform((size,),xmin,xmax,tf.bfloat16)
     y = tf.random.uniform((size,),ymin,ymax,tf.bfloat16)
     return tf.stack([x, y], axis=1), mandel(x=x, y=y,max_depth=max_depth)
 
-@tf.function
 def mandel(x, y, max_depth):
     zx, zy = x,y
     for n in range(1, max_depth):
         zx, zy = zx*zx - zy*zy + x, 2*zx*zy + y
     return tf.cast(tf.less(zx*zx+zy*zy, 4.0),tf.float16) #* 2.0 - 1.0
 
-#mds = tf.function(MandelbrotDataSet)
-#print(tf.autograph.to_code(mds))
+# print function code (doesn't work for unknown reasons)
+# ------------------------------------------------------
+# mds = tf.function(MandelbrotDataSet)
+# print(tf.autograph.to_code(mds))
 
 #%%
 # VIDEO
 writer = imageio.get_writer('./captures/autosave.mp4', fps=30)
-#capture_rate=10
 
 #%%
 class saveToVideo(tf.keras.callbacks.Callback):
@@ -56,7 +59,9 @@ class saveToVideo(tf.keras.callbacks.Callback):
         predictions = model.predict(data)
         plot = plt.scatter(x, y, s=1, c=predictions)
         plt.savefig("captures/autosave.png")
-        writer.append_data(imageio.imread("captures/autosave.png"))
+        im = imageio.imread("captures/autosave.png")
+        writer.append_data(im)
+        writer.append_data(im) # add a copy of the frame to slow down the playback
 
 #%%
 
@@ -67,55 +72,63 @@ class MandelSequence(tf.keras.utils.Sequence):
     def __len__(self):
         return self.batch_per_seq
     def __getitem__(self, item):
-#        batch = MandelbrotDataSet(self.batch_size)
-#        return batch.data, batch.outputs
         return MandelbrotDataSet(self.batch_size)
 
-#plt.figure(3)
-#mb1, mb2 = MandelbrotDataSet(100_000)
-#plot = plt.scatter(mb1[0], mb1[1], s=1, c=mb2)
-#plt.show()
-#exit(1)
 #%%
 
-BATCH_SIZE = 8192
-BATCH_PER_SEQ = 25
-EPOCHS = 400
-LR = 0.0018
+BATCH_SIZE = 16384
+BATCH_PER_SEQ = 10
+EPOCHS = 1000
+LR = 0.0020
 
 HIDDENLAYERS = 10
 LAYERWIDTH = 256
 
+# CREATE MODEL
+# ------------
 model = tf.keras.Sequential()
+
+# ADD LAYER
+# ---------
+
+# input
 tf.keras.Input(shape=(2,))
 
+# hidden layers
 for _ in range(HIDDENLAYERS):
     model.add(tf.keras.layers.Dense(LAYERWIDTH, activation="gelu"))
 
+# output
 model.add(tf.keras.layers.Dense(1,activation="sigmoid"))
 
+# compile model
 model.compile(loss=tf.keras.losses.MeanSquaredError(),
               optimizer=tf.keras.optimizers.Adam(learning_rate=LR),
 #              optimizer=tf.keras.optimizers.Adadelta(learning_rate=1.0),
               metrics=["accuracy", "mae", "mse"])
 
-#%%
-
+# init sequence generator
 sequence = MandelSequence(BATCH_SIZE, BATCH_PER_SEQ)
-#val_sequence = MandelbrotDataSet(BATCH_SIZE)
-#input, output = MandelbrotDataSet(100_000)
-history = model.fit(sequence,epochs=EPOCHS)#, #validation_data=(val_sequence.data, val_sequence.outputs),
-#history = model.fit(input, output,epochs=EPOCHS, batch_size=BATCH_SIZE)#, #validation_data=(val_sequence.data, val_sequence.outputs),
-#                    callbacks=[saveToVideo()])
-#                    callbacks=[])
 
-#%%
+# train (simple)
+history = model.fit(sequence,epochs=EPOCHS)
+
+# train (with validation)
+#val_sequence = MandelbrotDataSet(BATCH_SIZE)
+#history = model.fit(sequence,epochs=EPOCHS, validation_data=(val_sequence.data, val_sequence.outputs))
+
+# train (with video callback)
+# history = model.fit(sequence, epochs=EPOCHS, callbacks=[saveToVideo()])
+
 #print("Evaluate on test data")
 #eval_sequence = MandelSequence(BATCH_SIZE, 2)
 #results = model.evaluate(eval_sequence)
 #print("test loss, test acc:", results)
 
 #%%
+
+# VISUALIZATION
+# -------------
 
 np.set_printoptions(precision=3, suppress=True)
 
