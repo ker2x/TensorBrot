@@ -9,8 +9,11 @@ import datetime
 import imageio
 
 print(tf.__version__)
-#physical_devices = tf.config.list_physical_devices('GPU')
-#tf.config.experimental.set_memory_growth(physical_devices[0],True)
+physical_devices = tf.config.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(physical_devices[0],True)
+#from tensorflow.python.framework.ops import disable_eager_execution
+#disable_eager_execution()
+#print(tf.executing_eagerly())
 
 # Hide GPU from visible devices
 #tf.config.set_visible_devices([], 'GPU')
@@ -18,19 +21,22 @@ print(tf.__version__)
 
 #%%
 
-class MandelbrotDataSet:
-    def __init__(self, size=1000, max_depth=100, xmin=-2.0, xmax=0.7, ymin=-1.3, ymax=1.3):
-        self.x = tf.random.uniform((size,),xmin,xmax,tf.float16)
-        self.y = tf.random.uniform((size,),ymin,ymax,tf.float16)
-        self.outputs = self.mandel(x=self.x, y=self.y,max_depth=max_depth)
-        self.data = tf.stack([self.x, self.y], axis=1)
+#class MandelbrotDataSet:
+@tf.function
+def MandelbrotDataSet(size=1000, max_depth=100, xmin=-2.0, xmax=0.7, ymin=-1.3, ymax=1.3):
+    x = tf.random.uniform((size,),xmin,xmax,tf.bfloat16)
+    y = tf.random.uniform((size,),ymin,ymax,tf.bfloat16)
+    return tf.stack([x, y], axis=1), mandel(x=x, y=y,max_depth=max_depth)
 
-    @staticmethod
-    def mandel(x, y, max_depth):
-        zx, zy = x,y
-        for n in range(1, max_depth):
-            zx, zy = zx*zx - zy*zy + x, 2*zx*zy + y
-        return tf.cast(tf.less(zx*zx+zy*zy, 4.0),tf.float16) #* 2.0 - 1.0
+@tf.function
+def mandel(x, y, max_depth):
+    zx, zy = x,y
+    for n in range(1, max_depth):
+        zx, zy = zx*zx - zy*zy + x, 2*zx*zy + y
+    return tf.cast(tf.less(zx*zx+zy*zy, 4.0),tf.float16) #* 2.0 - 1.0
+
+#mds = tf.function(MandelbrotDataSet)
+#print(tf.autograph.to_code(mds))
 
 #%%
 # VIDEO
@@ -61,18 +67,24 @@ class MandelSequence(tf.keras.utils.Sequence):
     def __len__(self):
         return self.batch_per_seq
     def __getitem__(self, item):
-        batch = MandelbrotDataSet(self.batch_size)
-        return batch.data, batch.outputs
+#        batch = MandelbrotDataSet(self.batch_size)
+#        return batch.data, batch.outputs
+        return MandelbrotDataSet(self.batch_size)
 
+#plt.figure(3)
+#mb1, mb2 = MandelbrotDataSet(100_000)
+#plot = plt.scatter(mb1[0], mb1[1], s=1, c=mb2)
+#plt.show()
+#exit(1)
 #%%
 
-BATCH_SIZE = 8192
-BATCH_PER_SEQ = 640
-EPOCHS = 5
+BATCH_SIZE = 4096
+BATCH_PER_SEQ = 200
+EPOCHS = 20
 LR = 0.0012
 
 HIDDENLAYERS = 10
-LAYERWIDTH = 60
+LAYERWIDTH = 256
 
 model = tf.keras.Sequential()
 tf.keras.Input(shape=(2,))
@@ -91,9 +103,11 @@ model.compile(loss=tf.keras.losses.MeanSquaredError(),
 
 sequence = MandelSequence(BATCH_SIZE, BATCH_PER_SEQ)
 #val_sequence = MandelbrotDataSet(BATCH_SIZE)
-history = model.fit(sequence,epochs=EPOCHS, #validation_data=(val_sequence.data, val_sequence.outputs),
+#input, output = MandelbrotDataSet(100_000)
+history = model.fit(sequence,epochs=EPOCHS)#, #validation_data=(val_sequence.data, val_sequence.outputs),
+#history = model.fit(input, output,epochs=EPOCHS, batch_size=BATCH_SIZE)#, #validation_data=(val_sequence.data, val_sequence.outputs),
 #                    callbacks=[saveToVideo()])
-                    callbacks=[])
+#                    callbacks=[])
 
 #%%
 #print("Evaluate on test data")
