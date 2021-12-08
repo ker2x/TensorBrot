@@ -9,8 +9,12 @@ import datetime
 import imageio
 
 print(tf.__version__)
-physical_devices = tf.config.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(physical_devices[0],True)
+#physical_devices = tf.config.list_physical_devices('GPU')
+#tf.config.experimental.set_memory_growth(physical_devices[0],True)
+
+# Hide GPU from visible devices
+#tf.config.set_visible_devices([], 'GPU')
+#tf.debugging.set_log_device_placement(True)
 
 #%%
 
@@ -31,14 +35,17 @@ class MandelbrotDataSet:
 #%%
 # VIDEO
 writer = imageio.get_writer('./captures/autosave.mp4', fps=30)
-capture_rate=10
+#capture_rate=10
 
 #%%
 class saveToVideo(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         plt.figure(4)
-        x = tf.random.uniform((2_000,), -2.0, 0.7, tf.float16)
-        y = tf.random.uniform((2_000,), -1.3, 1.3, tf.float16)
+        plt.clf()
+        ax = plt.axes()
+        ax.set_facecolor("black")
+        x = tf.random.uniform((40_000,), -2.0, 0.7, tf.float16)
+        y = tf.random.uniform((40_000,), -1.3, 1.3, tf.float16)
         data = tf.stack([x, y], axis=1)
         predictions = model.predict(data)
         plot = plt.scatter(x, y, s=1, c=predictions)
@@ -60,8 +67,8 @@ class MandelSequence(tf.keras.utils.Sequence):
 #%%
 
 BATCH_SIZE = 8192
-BATCH_PER_SEQ = 16
-EPOCHS = 200
+BATCH_PER_SEQ = 640
+EPOCHS = 5
 LR = 0.0012
 
 HIDDENLAYERS = 10
@@ -83,9 +90,10 @@ model.compile(loss=tf.keras.losses.MeanSquaredError(),
 #%%
 
 sequence = MandelSequence(BATCH_SIZE, BATCH_PER_SEQ)
-val_sequence = batch = MandelbrotDataSet(BATCH_SIZE)
-history = model.fit(sequence,epochs=EPOCHS, validation_data=(val_sequence.data, val_sequence.outputs),
-                    callbacks=[saveToVideo()])
+#val_sequence = MandelbrotDataSet(BATCH_SIZE)
+history = model.fit(sequence,epochs=EPOCHS, #validation_data=(val_sequence.data, val_sequence.outputs),
+#                    callbacks=[saveToVideo()])
+                    callbacks=[])
 
 #%%
 #print("Evaluate on test data")
@@ -102,7 +110,7 @@ hist['epoch'] = history.epoch
 hist.tail()
 plt.figure(1)
 def plot_loss(history):
-  plt.plot(history.history['val_loss'], label='validation loss')
+#  plt.plot(history.history['val_loss'], label='validation loss')
   plt.plot(history.history['loss'], label='training loss')
   plt.xlabel('Epoch')
   plt.ylabel('Loss')
