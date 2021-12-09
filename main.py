@@ -78,7 +78,7 @@ class MandelSequence(tf.keras.utils.Sequence):
 
 BATCH_SIZE = 4096
 BATCH_PER_SEQ = 64
-EPOCHS = 1000
+EPOCHS = 600
 LR = 0.0020
 
 HIDDENLAYERS = 10
