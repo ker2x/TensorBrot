@@ -39,8 +39,8 @@ tf.config.experimental.set_memory_growth(physical_devices[0],True)
 
 @tf.function
 def MandelbrotDataSet(size=1000, max_depth=100, xmin=-2.0, xmax=0.7, ymin=-1.3, ymax=1.3):
-    x = tf.random.uniform((size,),xmin,xmax,tf.bfloat16)
-    y = tf.random.uniform((size,),ymin,ymax,tf.bfloat16)
+    x = tf.random.uniform((size,),xmin,xmax,tf.float32)
+    y = tf.random.uniform((size,),ymin,ymax,tf.float32)
     less = mandel(x=x, y=y,max_depth=max_depth)
     return tf.stack([x, y], axis=1), less #tf.stack([less, more], axis = 1)
 
@@ -68,8 +68,8 @@ class saveToVideo(tf.keras.callbacks.Callback):
         plt.clf()
         ax = plt.axes()
         ax.set_facecolor("grey")
-        x = tf.random.uniform((80_000,), -2.0, 0.7, tf.float16)
-        y = tf.random.uniform((80_000,), -1.3, 1.3, tf.float16)
+        x = tf.random.uniform((80_000,), -2.0, 0.7, tf.float32)
+        y = tf.random.uniform((80_000,), -1.3, 1.3, tf.float32)
         data = tf.stack([x, y], axis=1)
         predictions = model.predict(data)
         pred2 = tf.transpose(predictions)[1]
@@ -93,14 +93,15 @@ class MandelSequence(tf.keras.utils.Sequence):
         return MandelbrotDataSet(self.batch_size)
 
 #%%
+start = time.time()
 
-BATCH_SIZE = 4096
+BATCH_SIZE = 1024
 BATCH_PER_SEQ = 64
-EPOCHS = 256
-LR = 0.005
+EPOCHS = 128
+LR = 0.002
 
 HIDDENLAYERS = 10
-LAYERWIDTH = 126
+LAYERWIDTH = 126    #126,288s ; 1024, 694s
 
 # CREATE MODEL
 # ------------
@@ -165,16 +166,18 @@ def plot_loss(history):
 plot_loss(history)
 
 #%%
-x = tf.random.uniform((200_000,), -2.0, 0.7, tf.float16)
-y = tf.random.uniform((200_000,), -1.3, 1.3, tf.float16)
+x = tf.random.uniform((200_000,), -2.0, 0.7, tf.float32)
+y = tf.random.uniform((200_000,), -1.3, 1.3, tf.float32)
 data = tf.stack([x, y], axis=1)
 predictions = model.predict(data)
 pred2 = tf.transpose(predictions)[1]
-#pred3 = tf.math.log(tf.add(pred2, tf.abs(tf.reduce_min(pred2))))
-#pred3 = tf.math.log_sigmoid(pred2)
+pred3 = tf.math.sqrt(tf.add(pred2, tf.abs(tf.reduce_min(pred2))))
+pred4 = tf.math.log_sigmoid(pred2)
 #%%
 plt.figure(2, figsize=(2.7*3, 2.6*3), dpi=300)
-plot = plt.scatter(x, y, s=1, c=pred2)
+plot = plt.scatter(x, y, s=1, c=pred3)
+plt.figure(21, figsize=(2.7*3, 2.6*3), dpi=300)
+plot = plt.scatter(x, y, s=1, c=pred4)
 plt.show()
 
 #%%
@@ -185,3 +188,5 @@ file_path = f"models/mandelbrain-{ts}/"
 model.save(filepath=file_path, save_format='tf')
 
 writer.close()
+
+print("elapsed : ", time.time() - start)
